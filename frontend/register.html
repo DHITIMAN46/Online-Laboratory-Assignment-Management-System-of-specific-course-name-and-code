@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <link rel="stylesheet" href="styles1.css">
+</head>
+<body>
+<div class="register-container">
+  <h2>Register</h2>
+  <label>Name:</label>
+  <input type="text" id="name"><br><br>
+  <label>Email:</label>
+  <input type="email" id="email"><br><br>
+  <label>Password:</label>
+  <input type="password" id="password"><br><br>
+  <label>Role:</label>
+  <select id="role" onchange="toggleCourseFields()">
+    <option value="student">Student</option>
+    <option value="instructor">Instructor</option>
+    <option value="admin">Admin</option>
+  </select><br><br>
+
+  <div id="courseFields">
+    <label>Course Name:</label>
+    <select id="course_name" onchange="updateCourseCode()">
+      <option value="">-- Select a Course --</option>
+      <option value="Data Communication">Data Communication Lab</option>
+      <option value="Operating System">Operating System Lab</option>
+      <option value="Computer Networks">Computer Networks Lab</option>
+      <option value="Database Management">Database Management Lab</option>
+      <option value="Software Engineering">Software Engineering Lab</option>
+    </select><br><br>
+
+    <label>Course Code:</label>
+    <input type="text" id="course_code" readonly><br><br>
+  </div>
+
+  <button onclick="register()">Register</button>
+</div>
+
+  <script>
+    const courseMap = {
+      "Data Communication": "CS201",
+      "Operating System": "CS202",
+      "Computer Networks": "CS203",
+      "Database Management": "CS204",
+      "Software Engineering": "CS205"
+    };
+
+    function updateCourseCode() {
+      const courseName = document.getElementById("course_name").value;
+      const code = courseMap[courseName] || "";
+      document.getElementById("course_code").value = code;
+    }
+
+    function toggleCourseFields() {
+      const role = document.getElementById("role").value;
+      const courseSection = document.getElementById("courseFields");
+
+      if (role === "admin") {
+        courseSection.style.display = "none";
+      } else {
+        courseSection.style.display = "block";
+      }
+    }
+
+    function register() {
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const role = document.getElementById("role").value;
+      const course_name = document.getElementById("course_name").value;
+      const course_code = document.getElementById("course_code").value;
+
+      if (!name || !email || !password || !role) {
+        alert("Name, email, password, and role are required.");
+        return;
+      }
+
+      if (role !== "admin" && (!course_name || !course_code)) {
+        alert("Please select a course.");
+        return;
+      }
+
+      fetch("http://localhost/online_lab_system/backend/api/register.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, role, course_name, course_code })
+      })
+      .then(async res => {
+        const text = await res.text();
+        try {
+          const json = JSON.parse(text);
+          alert(json.message || json.error);
+          console.log("✅ Response:", json);
+        } catch {
+          alert("❌ Server didn't return valid JSON:\n" + text);
+          console.error("Invalid JSON:", text);
+        }
+      })
+      .catch(error => {
+        alert("Network error: " + error.message);
+        console.error("Fetch error:", error);
+      });
+    }
+
+    // Run toggleCourseFields on initial load to hide course section for admin
+    window.onload = toggleCourseFields;
+  </script>
+</body>
+</html>

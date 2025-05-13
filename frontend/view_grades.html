@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>View Grades</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>My Grades</h1>
+
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Assignment ID</th>
+        <th>File</th>
+        <th>Grade</th>
+        <th>Feedback</th>
+      </tr>
+    </thead>
+    <tbody id="gradesTable"></tbody>
+  </table>
+
+  <br>
+  <button onclick="logout()">Logout</button>
+
+  <script>
+    const API_URL = "http://localhost/online_lab_system/backend/api";
+  
+    window.onload = function() {
+      console.log("Fetching grades for user:", localStorage.getItem("user_id"));  // ✅ Add this line
+      fetchGrades();
+    };
+  
+    function fetchGrades() {
+      const user_id = localStorage.getItem("user_id");
+  
+      fetch(`${API_URL}/get_my_grades.php?user_id=${user_id}`)
+        .then(res => res.json())
+        .then(data => {
+          const table = document.getElementById("gradesTable");
+          table.innerHTML = "";
+  
+          data.forEach(sub => {
+            table.innerHTML += `
+              <tr>
+                <td>${sub.assignment_id}</td>
+                <td><a href="../../uploads/${sub.file_path}" target="_blank">View File</a></td>
+                <td>${sub.grade !== null ? sub.grade : 'Pending'}</td>
+                <td>${sub.feedback !== null ? sub.feedback : 'Pending'}</td>
+              </tr>
+            `;
+          });
+        })
+        .catch(err => console.error("Error fetching grades:", err));
+    }
+  
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+  </script>
+  
+</body>
+</html>

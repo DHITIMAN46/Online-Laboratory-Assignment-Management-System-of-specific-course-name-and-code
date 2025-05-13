@@ -1,0 +1,62 @@
+/* Centering layout */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color:  hsl(295.65deg 15.65% 60.61%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 120vh;
+  }
+  
+  /* Registration form container */
+  .register-container {
+    background-color: #d6dee0;
+    padding: 40px 30px;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    max-width: 420px;
+    width: 100%;
+    height: 750px;
+    overflow-y: auto;
+  }
+  
+  h2 {
+    text-align: center;
+    color: #202b25;
+    margin-bottom: 20px;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #2f3542;
+  }
+  
+  input, select {
+    width: 100%;
+    padding: 10px;
+    font-size: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  
+  button {
+    width: 100%;
+    padding: 12px;
+    background-color: hsl(145, 89%, 35%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  button:hover {
+    background-color: #1dbf73;
+  }
+  

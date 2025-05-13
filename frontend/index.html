@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1 style="text-align: center; color: rgb(9, 9, 9); font-size: 36px;">
+    ONLINE LABORATORY ASSIGNMENT MANAGEMENT SYSTEM SUPPORTED BY SPECIFIC COURSE NAME AND CODE
+  </h1>
+  
+  <div class="login-container">
+    <div class="login-box">
+      <h2>Login</h2>
+      <input type="email" id="email" placeholder="Email"><br><br>
+      <input type="password" id="password" placeholder="Password"><br><br>
+      <button onclick="login()">Login</button>
+      <p>Don't have an account? <a href="register.html">Register</a></p>
+    </div>
+  </div>
+
+  <script>
+    function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+    
+      if (!email || !password) {
+        alert("Please enter both email and password.");
+        return;
+      }
+    
+      fetch("http://localhost/online_lab_system/backend/api/login.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      })
+      .then(res => res.json())
+      .then(json => {
+        if (json.success) {
+          localStorage.setItem("user_id", json.user_id);
+          localStorage.setItem("role", json.role);
+          localStorage.setItem("course_id", json.course_id);
+          alert("Login successful!");
+          window.location.href = "dashboard.html";
+        } else {
+          alert(json.message);
+        }
+      })
+      .catch(error => {
+        alert("Network error: " + error.message);
+        console.error("Login error:", error);
+      });
+    }
+    </script>
+    
+</body>
+</html>

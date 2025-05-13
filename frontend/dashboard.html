@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <h1>Dashboard</h1>
+  <h3 id="welcomeText"></h3>
+
+  <!-- STUDENT SECTION -->
+  <div id="studentSection" style="display: none;">
+    <h2>Available Assignments</h2>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Description</th>
+          <th>Deadline</th>
+          <th>Submit / View</th>
+          <th>Grade</th>
+          <th>Feedback</th>
+        </tr>
+      </thead>
+      
+      <tbody id="assignmentTable"></tbody>
+    </table>
+  </div>
+
+  <!-- INSTRUCTOR SECTION -->
+  <div id="instructorSection" style="display: none;">
+  <h2>Create Assignment</h2>
+  <input type="text" id="title" placeholder="Assignment Title"><br><br>
+  <textarea id="description" placeholder="Assignment Description"></textarea><br><br>
+  <input type="datetime-local" id="deadline"><br><br>
+  <button onclick="createAssignment()">Create Assignment</button>
+
+  <h2>Your Assignments</h2>
+  <table border="1">
+    <thead>
+      <tr><th>Title</th><th>View Submissions</th></tr>
+    </thead>
+    <tbody id="instructorAssignmentTable"></tbody>
+  </table>
+
+  <div id="submissionsSection" style="display:none;">
+    <h3>Submissions</h3>
+    <table border="1">
+      <thead>
+        <tr><th>Student ID</th><th>File</th><th>Grade</th><th>Feedback</th><th>Action</th></tr>
+      </thead>
+      <tbody id="submissionTable"></tbody>
+    </table>
+  </div>
+</div>
+
+
+  <!-- ADMIN SECTION -->
+  <!-- ADMIN SECTION -->
+<!-- ADMIN SECTION -->
+<div id="adminSection" style="display: none;">
+  <h2>Admin Panel</h2>
+  <p>You are logged in as Admin.</p>
+
+  <h3>All Student Grades</h3>
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Student Name</th>
+        <th>Course</th>
+        <th>Assignment Title</th>
+        <th>Grade</th>
+      </tr>
+    </thead>
+    <tbody id="adminGradesTable"></tbody>
+  </table>
+</div>
+
+
+
+  <br><br>
+  <button onclick="logout()">Logout</button>
+
+  <script>
+    const API_URL = "http://localhost/online_lab_system/backend/api";
+
+    window.onload = function() {
+      const role = localStorage.getItem("role");
+      document.getElementById("welcomeText").innerText = "Logged in as: " + role;
+
+      if (role === "student") {
+        document.getElementById("studentSection").style.display = "block";
+        fetchAssignments();
+      } else if (role === "instructor") {
+        document.getElementById("instructorSection").style.display = "block";
+        fetchInstructorAssignments();
+      } else if (role === "admin") {
+        document.getElementById("adminSection").style.display = "block";
+      } else {
+        alert("Unauthorized Access");
+        window.location.href = "index.html";
+      }
+    };
+
+    // Fetch assignments for students
+  function fetchAssignments() {
+  const course_id = localStorage.getItem("course_id");
+  const user_id = localStorage.getItem("user_id");
+
+  fetch(`${API_URL}/get_assignments_by_course.php?course_id=${course_id}&user_id=${user_id}`)
+    .then(res => res.json())
+    .then(assignments => {
+      const table = document.getElementById("assignmentTable");
+      table.innerHTML = "";
+
+      assignments.forEach(a => {
+        const submitted = a.file_path ? `<a href="../uploads/${a.file_path}" target="_blank">View</a>` : `<input type="file" id="file_${a.id}"><button onclick="submitAssignment(${a.id})">Upload</button>`;
+        const grade = a.grade !== null ? a.grade : "-";
+        const feedback = a.feedback || "-";
+
+        table.innerHTML += `
+          <tr>
+            <td>${a.title}</td>
+            <td>${a.description}</td>
+            <td>${a.deadline}</td>
+            <td>${submitted}</td>
+            <td>${grade}</td>
+            <td>${feedback}</td>
+          </tr>`;
+      });
+    });
+}
+
+
+    // Student: Submit assignment
+    function submitAssignment(assignmentId) {
+      const fileInput = document.getElementById(`file_${assignmentId}`);
+      const file = fileInput.files[0];
+      const user_id = localStorage.getItem("user_id");
+
+      if (!file) {
+        alert("Please choose a file first!");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("assignment_id", assignmentId);
+      formData.append("user_id", user_id);
+
+      fetch(`${API_URL}/upload_submission.php`, {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => alert(data.message))
+      .catch(err => console.error("File upload error:", err));
+    }
+
+    // Instructor: Create assignment
+    function createAssignment() {
+      const title = document.getElementById("title").value;
+      const description = document.getElementById("description").value;
+      const deadline = document.getElementById("deadline").value;
+      const course_id = localStorage.getItem("course_id");
+
+      if (!course_id) {
+        alert("Course ID is missing. Please log in again.");
+        window.location.href = "index.html";
+        return;
+      }
+
+      fetch(`${API_URL}/add_assignment.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ course_id, title, description, deadline })
+      })
+      .then(res => res.json())
+      .then(data => alert(data.message))
+      .catch(err => console.error("Assignment creation error:", err));
+    }
+
+  // Fetch assignments for instructors
+ function fetchInstructorAssignments() {
+  const course_id = localStorage.getItem("course_id");
+  const user_id = localStorage.getItem("user_id"); // Add this line
+
+  if (!course_id || !user_id) {
+    console.error("Missing course_id or user_id in localStorage.");
+    return;
+  }
+
+  fetch(`${API_URL}/get_assignments_by_course.php?course_id=${course_id}&user_id=${user_id}`)
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
+    .then(assignments => {
+      const table = document.getElementById("instructorAssignmentTable");
+      if (!table) {
+        console.error("Table element with ID 'instructorAssignmentTable' not found.");
+        return;
+      }
+
+      table.innerHTML = "";
+
+      assignments.forEach(a => {
+        table.innerHTML += `
+          <tr>
+            <td>${a.title}</td>
+            <td><button onclick="viewSubmissions(${a.id})">View Submissions</button></td>
+          </tr>
+        `;
+      });
+    })
+    .catch(error => {
+      console.error("Error fetching assignments:", error);
+    });
+}
+
+
+// Instructor: View submissions for an assignment
+function viewSubmissions(assignmentId) {
+  console.log("🔍 Loading submissions for:", assignmentId);
+  document.getElementById("submissionsSection").style.display = "block";
+
+  fetch(`${API_URL}/get_submissions.php?assignment_id=${assignmentId}`)
+    .then(res => res.json())
+    .then(submissions => {
+      const table = document.getElementById("submissionTable");
+      table.innerHTML = "";
+      submissions.forEach(sub => {
+        table.innerHTML += `
+          <tr>
+            <td>${sub.student_name} (ID: ${sub.user_id})</td>
+            <td><a href="../uploads/${sub.file_path}" target="_blank">View</a></td>
+            <td><input type="number" id="grade_${sub.id}" value="${sub.grade || ""}"></td>
+            <td><input type="text" id="feedback_${sub.id}" value="${sub.feedback || ""}"></td>
+            <td><button onclick="submitGrade(${sub.id})">Grade</button></td>
+          </tr>`;
+      });
+    });
+}
+
+// Instructor: Submit grade and feedback
+function submitGrade(submissionId) {
+  const grade = document.getElementById(`grade_${submissionId}`).value;
+  const feedback = document.getElementById(`feedback_${submissionId}`).value;
+
+  fetch(`${API_URL}/grade_assignment.php`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ submission_id: submissionId, grade, feedback })
+  })
+  .then(res => res.json())
+  .then(data => alert(data.message))
+  .catch(err => console.error("Grade error:", err));
+}
+
+  // Fetch all student grades for adminfunction fetchAllGrades() {
+  fetch(`${API_URL}/get_all_grades.php`)
+  .then(res => res.json())
+  .then(grades => {
+    const table = document.getElementById("adminGradesTable");
+    table.innerHTML = "";
+
+    grades.forEach(grade => {
+      table.innerHTML += `
+        <tr>
+          <td>${grade.student_name}</td>
+          <td>${grade.course_name}</td>
+          <td>${grade.assignment_title}</td>
+          <td>${grade.grade ?? "-"}</td>
+        </tr>`;
+    });
+  })
+  .catch(err => console.error("Error fetching grades for admin:", err));
+
+
+
+
+    // Logout
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+  </script>
+</body>
+</html>

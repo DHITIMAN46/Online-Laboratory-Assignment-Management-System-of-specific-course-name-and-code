@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Grade Submissions</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>Grade Assignments</h1>
+
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Student ID</th>
+        <th>Assignment ID</th>
+        <th>Submission</th>
+        <th>Grade</th>
+        <th>Feedback</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="submissionTable"></tbody>
+  </table>
+
+  <button onclick="logout()">Logout</button>
+
+  <script>
+    const API_URL = "http://localhost/online_lab_system/backend/api";
+
+    window.onload = function() {
+      fetchSubmissions();
+    };
+
+    function fetchSubmissions() {
+      fetch(`${API_URL}/get_submissions.php`)
+      .then(res => res.json())
+      .then(data => {
+        const table = document.getElementById("submissionTable");
+        table.innerHTML = "";
+        data.forEach(sub => {
+          table.innerHTML += `
+            <tr>
+              <td>${sub.user_id}</td>
+              <td>${sub.assignment_id}</td>
+              <td><a href="../../uploads/${sub.file_path}" target="_blank">View File</a></td>
+              <td><input type="number" id="grade_${sub.id}" value="${sub.grade || ''}"></td>
+              <td><input type="text" id="feedback_${sub.id}" value="${sub.feedback || ''}"></td>
+              <td><button onclick="submitGrade(${sub.id})">Submit</button></td>
+            </tr>
+          `;
+        });
+      })
+      .catch(err => console.error("Error fetching submissions:", err));
+    }
+
+    function submitGrade(submissionId) {
+      const grade = document.getElementById(`grade_${submissionId}`).value;
+      const feedback = document.getElementById(`feedback_${submissionId}`).value;
+
+      fetch(`${API_URL}/grade_submission.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ submission_id: submissionId, grade, feedback })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+        fetchSubmissions(); // Refresh after grading
+      })
+      .catch(err => console.error("Error submitting grade:", err));
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+  </script>
+</body>
+</html>
